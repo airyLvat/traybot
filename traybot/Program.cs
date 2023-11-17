@@ -5,12 +5,14 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using Microsoft.Extensions.Configuration;
 
 namespace traybot
 {
     public class Program
     {
         private readonly DiscordSocketClient _client;
+        private Reactions _reactionsConfig;
 
         static void Main(string[] args)
             => new Program()
@@ -20,6 +22,13 @@ namespace traybot
 
         public Program()
         {
+            var reactionConfig = new ConfigurationBuilder()
+                .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
+                .AddJsonFile("appsettings.json").Build();
+
+            var section = reactionConfig.GetSection("Reactions");
+            _reactionsConfig = section.Get<Reactions>();
+
             var config = new DiscordSocketConfig
             {
                 GatewayIntents = GatewayIntents.AllUnprivileged | GatewayIntents.MessageContent
@@ -57,9 +66,24 @@ namespace traybot
             {
                 if (message.Content == "!ping")
                 {
-                    await message.Channel.SendMessageAsync("pong!");
+                    await message.Channel.SendMessageAsync("pong!!!");
+                }
+
+                if (message.Content == "!togglereaction")
+                {
+                    _reactionsConfig.DoReaction = !(true && _reactionsConfig.DoReaction);
+                }
+
+                if (_reactionsConfig.DoReaction)
+                {
+                    await message.AddReactionAsync((new Emoji("\U0001f495")));
                 }
             }
         }
+    }
+
+    public class Reactions
+    {
+        public bool DoReaction { get; set;}
     }
 }

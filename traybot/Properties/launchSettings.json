@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "traybot": {
+      "commandName": "Project"
+    },
+    "Docker": {
+      "commandName": "Docker"
+    }
+  }
+}

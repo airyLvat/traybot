@@ -6,13 +6,16 @@ using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using Microsoft.Extensions.Configuration;
+using traybot.Models;
+using traybot.Handlers;
 
 namespace traybot
 {
     public class Program
     {
-        private readonly DiscordSocketClient _client;
-        private Reactions _reactionsConfig;
+        private DiscordSocketClient _client;
+        private Config _config;
+        private MessageRouter mr;
 
         static void Main(string[] args)
             => new Program()
@@ -22,19 +25,21 @@ namespace traybot
 
         public Program()
         {
-            var reactionConfig = new ConfigurationBuilder()
-                .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
-                .AddJsonFile("appsettings.json").Build();
+            var _config = new ConfigurationBuilder()
+                .SetBasePath(System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Config"))
+                .AddJsonFile("appsettings.json")
+                .Build()
+                .Get<Config>();
 
-            var section = reactionConfig.GetSection("Reactions");
-            _reactionsConfig = section.Get<Reactions>();
+            mr = new MessageRouter(_config);
 
-            var config = new DiscordSocketConfig
+            var dsg = new DiscordSocketConfig
             {
-                GatewayIntents = GatewayIntents.AllUnprivileged | GatewayIntents.MessageContent
+                GatewayIntents = GatewayIntents.AllUnprivileged | GatewayIntents.MessageContent,
+                AlwaysDownloadUsers = true
             };
 
-            _client = new DiscordSocketClient(config);
+            _client = new DiscordSocketClient(dsg);
 
             _client.Log += LogAsync;
             _client.Ready += ReadyAsync;
@@ -62,28 +67,28 @@ namespace traybot
 
         private async Task MessageReceivedAsync(SocketMessage message)
         {
-            if (message.Author.Id == 497792454393593876) // tray
+            List<IResponse> responses = mr.RouteMessage(message);
+
+            foreach (IResponse response in responses)
             {
-                if (message.Content == "!ping")
-                {
-                    await message.Channel.SendMessageAsync("pong!!!");
-                }
 
-                if (message.Content == "!togglereaction")
+                switch (response.ResponseKind)
                 {
-                    _reactionsConfig.DoReaction = !(true && _reactionsConfig.DoReaction);
-                }
-
-                if (_reactionsConfig.DoReaction)
-                {
-                    await message.AddReactionAsync((new Emoji("\U0001f495")));
+                    case ResponseKinds.Response.Noop:
+                        break;
+                    case ResponseKinds.Response.Reaction:
+                        await response.ReactionResponse(message);
+                        break;
+                    case ResponseKinds.Response.Command:
+                        await response.Execute(message);
+                        _config = new ConfigurationBuilder()
+                            .SetBasePath(System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Config"))
+                            .AddJsonFile("appsettings.json")
+                            .Build()
+                            .Get<Config>();
+                        break;
                 }
             }
         }
-    }
-
-    public class Reactions
-    {
-        public bool DoReaction { get; set;}
     }
 }

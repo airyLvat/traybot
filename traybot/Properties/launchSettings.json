@@ -1,7 +1,10 @@
 {
   "profiles": {
     "traybot": {
-      "commandName": "Project"
+      "commandName": "Project",
+      "environmentVariables": {
+        "Discord_Bot_Token": "MTE3NDgzMzk5MTk4NDA5NTI3Mg.Giwrmn.a5D8v-12HdM4ZIpaTjAzXCg6VIA_R2NK8arhGU"
+      }
     },
     "Docker": {
       "commandName": "Docker"

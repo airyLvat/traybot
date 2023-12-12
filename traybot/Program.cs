@@ -86,6 +86,7 @@ namespace traybot
                             .AddJsonFile("appsettings.json")
                             .Build()
                             .Get<Config>();
+                        mr = new MessageRouter(_config);
                         break;
                 }
             }

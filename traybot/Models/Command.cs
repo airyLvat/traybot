@@ -80,7 +80,7 @@ namespace traybot.Models
 
                 var newJson = JsonSerializer.Serialize(config, jsonWriteOptions);
 
-                var appSettingsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "config", "appsettings.json");
+                var appSettingsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Config", "appsettings.json");
                 File.WriteAllText(appSettingsPath, newJson);
             }
             else
